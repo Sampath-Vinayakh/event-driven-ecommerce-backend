@@ -1,0 +1,115 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# =========================
+# Django
+# =========================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media & static (optional depending on setup)
+media/
+staticfiles/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Virtual Environment
+# =========================
+venv/
+env/
+ENV/
+.venv/
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Pytest / Coverage
+# =========================
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# =========================
+# mypy / type checking
+# =========================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Celery
+# =========================
+celerybeat-schedule*
+celerybeat.pid
+
+# =========================
+# Docker
+# =========================
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# Build / Dist
+# =========================
+build/
+dist/
+*.egg-info/
+
+# =========================
+# Node (if frontend later)
+# =========================
+node_modules/
+
+# =========================
+# Redis dump (if local)
+# =========================
+dump.rdb
+
+# =========================
+# Kafka logs (if local)
+# =========================
+kafka-logs/
+
+# =========================
+# Misc
+# =========================
+*.bak
+*.tmp
+*.temp
+test_razorpay_webhook_local.py
+docker-compose.yml
