@@ -1,7 +1,7 @@
 import json
 import logging
 
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer,KafkaError
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -42,11 +42,25 @@ class Command(BaseCommand):
                     continue
 
                 if msg.error():
-                    logger.warning(
-                        "Kafka consumer error",
-                        extra={"error": str(msg.error())},
-                    )
-                    continue
+                    err = msg.error()
+
+                    if err.code() == KafkaError._PARTITION_EOF:
+                        continue
+
+                    elif err.code() == KafkaError.UNKNOWN_TOPIC_OR_PART:
+                        logger.warning("Topic not available yet, retrying...")
+                        time.sleep(2)
+                        continue
+
+                    else:
+                        logger.error(
+                            "Kafka consumer error: %s (code=%s, name=%s)",
+                            err,
+                            err.code(),
+                            err.name(),
+                        )
+                        time.sleep(2)
+                        continue
 
                 try:
                     event = json.loads(msg.value().decode("utf-8"))
