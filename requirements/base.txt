@@ -17,3 +17,4 @@ structlog==24.1.0
 Pillow
 razorpay==2.0.1
 django-environ
+gunicorn>=21.2.0
