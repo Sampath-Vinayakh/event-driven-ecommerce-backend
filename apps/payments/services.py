@@ -19,20 +19,15 @@ logger = logging.getLogger(__name__)
 class PaymentService:
     @staticmethod
     @transaction.atomic
-    def create_checkout_session(*, order: Order) -> dict:
+    def create_payment_record(*, order: Order) -> Payment:
         if order.status != Order.Status.PENDING:
             raise ValueError("Checkout session can only be created for pending orders.")
 
         active_payment = order.payments.filter(
-            status__in=[
-                Payment.Status.PENDING,
-                Payment.Status.AUTHORIZED,
-            ]
+            status__in=[Payment.Status.PENDING, Payment.Status.AUTHORIZED]
         ).first()
         if active_payment:
             raise ValueError("Active payment already exists for this order.")
-
-        receipt = str(order.id)
 
         payment = Payment.objects.create(
             order=order,
@@ -41,18 +36,19 @@ class PaymentService:
             amount=order.total_amount,
             currency="INR",
             idempotency_key=str(uuid.uuid4()),
-            receipt=receipt,
-            provider_notes={
-                "order_id": str(order.id),
-            },
+            receipt=str(order.id),
+            provider_notes={"order_id": str(order.id)},
         )
+        return payment
 
+    @staticmethod
+    def create_provider_order(*, payment: Payment) -> dict:
         provider_response = RazorpayProvider.create_order(
             amount=payment.amount,
             currency=payment.currency,
-            receipt=receipt,
+            receipt=payment.receipt,
             notes={
-                "internal_order_id": str(order.id),
+                "internal_order_id": str(payment.order_id),
                 "internal_payment_id": str(payment.id),
             },
         )
@@ -67,29 +63,7 @@ class PaymentService:
             ]
         )
 
-        logger.info(
-            "Razorpay order created successfully",
-            extra={
-                "payment_id": str(payment.id),
-                "order_id": str(order.id),
-                "provider_order_id": payment.provider_order_id,
-            },
-        )
-
-        return {
-            "payment_id": str(payment.id),
-            "provider": Payment.Provider.RAZORPAY,
-            "key": settings.RAZORPAY_KEY_ID,
-            "amount": int(payment.amount * 100),
-            "currency": payment.currency,
-            "provider_order_id": payment.provider_order_id,
-            "order_id": str(order.id),
-            "customer": {
-                "name": f"{order.user.first_name} {order.user.last_name}".strip(),
-                "email": order.user.email,
-            },
-        }
-
+        return provider_response
 
     @staticmethod
     @transaction.atomic()
@@ -423,3 +397,12 @@ class PaymentService:
         )
 
         return payment
+
+    @staticmethod
+    def mark_failed(*, payment: Payment, reason: str | None = None) -> None:
+        payment.status = Payment.Status.FAILED
+        if reason:
+            payment.failure_reason = reason
+            payment.save(update_fields=["status", "failure_reason", "updated_at"])
+        else:
+            payment.save(update_fields=["status", "updated_at"])
