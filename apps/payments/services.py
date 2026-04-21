@@ -63,7 +63,12 @@ class PaymentService:
             ]
         )
 
-        return provider_response
+        return {
+            "provider": Payment.Provider.RAZORPAY,
+            "provider_order_id": payment.provider_order_id,
+            "amount": int(payment.amount * 100), 
+            "currency": payment.currency,
+        }
 
     @staticmethod
     @transaction.atomic()

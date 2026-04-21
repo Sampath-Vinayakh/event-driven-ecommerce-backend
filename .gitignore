@@ -111,4 +111,3 @@ kafka-logs/
 *.bak
 *.tmp
 *.temp
-performance
