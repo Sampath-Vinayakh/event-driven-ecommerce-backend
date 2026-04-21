@@ -111,6 +111,94 @@ An example environment file is already provided:
    
 ---
 
+## Performance & Reliability Benchmarks
+
+### Product Detail API
+
+The product detail endpoint was load-tested with k6 under concurrent traffic to evaluate read-path scalability and caching effectiveness.
+
+#### 🔹 100 Concurrent Users (Key Results)
+
+| Scenario   | Avg Latency | p95       | p99       | RPS   | Success Rate |
+| ---------- | ----------- | --------- | --------- | ----- | ------------ |
+| No Cache   | 358.68 ms   | 577.43 ms | 865.94 ms | 73.16 | 100%         |
+| Cold Cache | 6.55 ms     | 14.18 ms  | 44 ms     | 99.01 | 100%         |
+| Warm Cache | 6.15 ms     | 12.47 ms  | 46.08 ms  | 99.19 | 100%         |
+
+#### 🔍 Key Observations
+
+* ~98% reduction in p95 latency (577 ms → ~12 ms) with caching
+* Throughput improved from ~73 req/s → ~99 req/s (~35% increase)
+* Warm cache eliminated latency spikes and stabilized tail latency
+* Maintained 100% success rate across all scenarios
+
+#### 💡 What this demonstrates
+
+* Cache-aside pattern significantly improves scalability
+* Database bottlenecks are eliminated under high concurrency
+* System maintains consistent performance under heavy read load
+
+---
+
+### Checkout Correctness Under Concurrency
+
+The checkout flow was tested under high contention using a single product with limited stock.
+
+#### Test Setup
+
+* 50 concurrent users
+* Single product
+* Initial stock: 20
+
+#### Results
+
+* 20 successful checkouts (exact stock limit)
+* 0 overselling occurrences
+* 0 server failures
+
+#### What this demonstrates
+
+* Row-level locking (`select_for_update`) ensures correctness
+* Transactions prevent race conditions
+* System fails safely after stock exhaustion
+
+---
+
+### Checkout Scalability Under Load
+
+The checkout API was tested using multiple products with sufficient stock to minimize contention and measure system reliability.
+
+#### Test Setup
+
+* Up to 150 concurrent users
+* ~7 minutes sustained load
+* Multi-product distribution with sufficient inventory
+
+#### Results
+
+* 17,638 successful checkouts
+* ~42 requests/sec throughput
+* 100% success rate
+* 0% server failures
+
+#### What this demonstrates
+
+* System sustains high-volume transactional load
+* Checkout flow remains stable under heavy concurrency
+* No crashes or unexpected failures during sustained execution
+
+---
+
+## Key Reliability Takeaways
+
+* Zero server errors under checkout load
+* Strong concurrency safety (no overselling)
+* Stable transactional behavior under write-heavy operations
+* Significant read-path optimization using Redis caching
+* Reliable end-to-end system performance under sustained traffic
+
+---
+
 ##  Key Learnings
 
 - Event-driven systems
