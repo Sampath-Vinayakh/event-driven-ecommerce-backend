@@ -63,18 +63,20 @@ class CheckoutService:
             db_step_committed = True
 
             payment = PaymentService.create_payment_record(order=order)
-            payment_data = PaymentService.create_provider_checkout_session(payment=payment)
-
+            payment_data = PaymentService.create_provider_order(payment=payment)
             logger.info(
                 "Checkout session created successfully",
                 extra={
                     "order_id": str(order.id),
-                    "payment_id": payment_data["payment_id"],
+                    "provider_order_id": payment_data["provider_order_id"],
                     "provider": payment_data["provider"],
                 },
             )
 
-            return True, payment_data
+            return True, {
+                "order_id": str(order.id),
+                **payment_data,
+            }
 
         except ValueError as exc:
             logger.warning(
